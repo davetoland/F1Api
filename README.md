@@ -29,9 +29,9 @@ builder.Services.AddHttpClient<ApiSportsClient>()
 By calling ```ReadAsStreamAsync``` on the HttpContent, combined with use of ```JsonSerializer.DeserializeAsync```, we're able to deserialise directly from the stream, without buffering:
 
 ```csharp
-private async Task<Result<IReadOnlyCollection<T>>> Get<T>(Uri uri, CancellationToken cancellationToken)
+public async Task<Result<IList<T>>> Get<T>(string url, CancellationToken cancellationToken)
 {
-	var request = new HttpRequestMessage(HttpMethod.Get, uri);
+	var request = new HttpRequestMessage(HttpMethod.Get, new Uri(_uri, url.Trim('/')));
 	using var result = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 	if (result == null)
 		return Result.Fail("Unable to fetch results from API");
@@ -73,15 +73,13 @@ This is a master account that gives you access to several different sports APIs,
 
 ### Usage:
 	
-<pre>
-<span style='color:#aaa'>
-public ApiClient(HttpClient httpClient, <span style='color:#3AC6E7'>IConfiguration config</span>)
+<pre><code>
+public ApiClient(HttpClient httpClient, <b>IConfiguration config</b>)
 {
-    var apiKey = <span style='color:#3AC6E7'>config[_apiKeyName]</span>;
+    var apiKey = <b>config[_apiKeyName]</b>;
     //..
 }
-</span>
-</pre>
+</code></pre>
 <br />
 
 # Docker & Redis
