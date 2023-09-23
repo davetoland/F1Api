@@ -1,5 +1,7 @@
 # .NET 7 Minimal API with Delegated Redis Caching
 
+An example API that uses Formula 1 data from a 3rd party to demonstrate fully asynchronous deserialisation of JSON data with Redis caching.
+
 ### HttpMessagageHandler interception with DelegatingHandler
 
 By using a DelegatingHandler in the HTTP message handling pipeline, we're able to intercept API requests as they come through from the HttpClient.
@@ -32,7 +34,7 @@ By calling ```ReadAsStreamAsync``` on the HttpContent, combined with use of ```J
 public async Task<Result<IList<T>>> Get<T>(string url, CancellationToken cancellationToken)
 {
 	var request = new HttpRequestMessage(HttpMethod.Get, new Uri(_uri, url.Trim('/')));
-	using var result = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+	using var result = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 	if (result == null)
 		return Result.Fail("Unable to fetch results from API");
 
@@ -73,13 +75,16 @@ This is a master account that gives you access to several different sports APIs,
 
 ### Usage:
 	
-<pre><code>
-public ApiClient(HttpClient httpClient, <b>IConfiguration config</b>)
+```csharp
+private const string _apiKeyName = "apisports:api-key";
+private const string _apiKeyHeader = "x-apisports-key";
+
+public ApiClient(HttpClient httpClient, IConfiguration config)
 {
-    var apiKey = <b>config[_apiKeyName]</b>;
-    //..
+    var apiKey = config[_apiKeyName];
+	_httpClient.DefaultRequestHeaders.Add(_apiKeyHeader, apiKey);
 }
-</code></pre>
+```
 <br />
 
 # Docker & Redis

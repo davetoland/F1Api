@@ -33,7 +33,7 @@ public class ApiClient
             return Result.Fail("Unable to fetch results from API");
 
         using var contentStream = await result.Content.ReadAsStreamAsync(cancellationToken);
-        var response = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(contentStream, JsonOptions, cancellationToken);
+        var response = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(contentStream, JsonOptions, cancellationToken).ConfigureAwait(false);
         return response.Data.ToResult();
     }
 }
