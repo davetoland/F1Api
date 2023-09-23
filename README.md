@@ -29,7 +29,7 @@ builder.Services.AddHttpClient<ApiSportsClient>()
 ### CachedResponseHandler
 
 When an HttpClient calls the SendAsync method, it's actually being called on each of a chain of handlers. 
-We can create a custom a custom handler, and inject it into that pipeline. This means we can then chose to call the 
+We can create a custom handler, and inject it into that pipeline. This means we can then chose to call the 
 next handler (by calling base.SendAsync) in order to allow the call through, or we can intercept the call and return
 our own version of the result - which in this case comes from a previously cached response: 
 
