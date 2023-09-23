@@ -36,32 +36,32 @@ our own version of the result - which in this case comes from a previously cache
 ```csharp
 public class CachedResponseHandler : DelegatingHandler
 {
-    private readonly IDistributedCache _cache;
-    private readonly ICacheDateProvider _cacheDateProvider;
+  private readonly IDistributedCache _cache;
+  private readonly ICacheDateProvider _cacheDateProvider;
 
-    public CachedResponseHandler(IDistributedCache cache, ICacheDateProvider cacheDateProvider)
-    {
-        _cache = cache;
-        _cacheDateProvider = cacheDateProvider;
-    }
+  public CachedResponseHandler(IDistributedCache cache, ICacheDateProvider cacheDateProvider)
+  {
+    _cache = cache;
+    _cacheDateProvider = cacheDateProvider;
+  }
 
-    protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        var cacheKey = BuildCacheKey(request).ValueOrDefault; 
-        if (string.IsNullOrWhiteSpace(cacheKey))
-            return await base.SendAsync(request, cancellationToken);
+  protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+  {
+	var cacheKey = BuildCacheKey(request).ValueOrDefault; 
+	if (string.IsNullOrWhiteSpace(cacheKey))
+	  return await base.SendAsync(request, cancellationToken);
 
-        var cacheRequest = await GetContentFromCache(cacheKey, cancellationToken);
-        if (cacheRequest.IsSuccess)
-            return cacheRequest.Value;
+	var cacheRequest = await GetContentFromCache(cacheKey, cancellationToken);
+	if (cacheRequest.IsSuccess)
+	  return cacheRequest.Value;
 
-        var response = await base.SendAsync(request, cancellationToken);
-        await CacheResponseContent(response, cacheKey, cancellationToken);
+	var response = await base.SendAsync(request, cancellationToken);
+	await CacheResponseContent(response, cacheKey, cancellationToken);
 
-        return response;
-    }
+	return response;
+  }
 
-	//...
+//...
 }
 ```
 
@@ -72,14 +72,14 @@ When we do have to call out to the 3rd party API, by calling ```ReadAsStreamAsyn
 ```csharp
 public async Task<Result<IList<T>>> Get<T>(string url, CancellationToken cancellationToken)
 {
-	var request = new HttpRequestMessage(HttpMethod.Get, new Uri(_uri, url.Trim('/')));
-	using var result = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-	if (result == null)
-		return Result.Fail("Unable to fetch results from API");
+  var request = new HttpRequestMessage(HttpMethod.Get, new Uri(_uri, url.Trim('/')));
+  using var result = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+  if (result == null)
+    return Result.Fail("Unable to fetch results from API");
 
-	using var contentStream = await result.Content.ReadAsStreamAsync(cancellationToken);
-	var response = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(contentStream, JsonOptions, cancellationToken);
-	return response.Data.ToResult();
+  using var contentStream = await result.Content.ReadAsStreamAsync(cancellationToken);
+  var response = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(contentStream, JsonOptions, cancellationToken);
+  return response.Data.ToResult();
 }
 ```
 
@@ -120,8 +120,8 @@ private const string _apiKeyHeader = "x-apisports-key";
 
 public ApiClient(HttpClient httpClient, IConfiguration config)
 {
-    var apiKey = config[_apiKeyName];
-	_httpClient.DefaultRequestHeaders.Add(_apiKeyHeader, apiKey);
+  var apiKey = config[_apiKeyName];
+  _httpClient.DefaultRequestHeaders.Add(_apiKeyHeader, apiKey);
 }
 ```
 <br />
