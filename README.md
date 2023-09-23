@@ -26,9 +26,48 @@ builder.Services.AddHttpClient<ApiSportsClient>()
     .AddHttpMessageHandler<CachedResponseHandler>();
 ```
 
+### CachedResponseHandler
+
+When an HttpClient calls the SendAsync method, it's actually being called on each of a chain of handlers. 
+We can create a custom a custom handler, and inject it into that pipeline. This means we can then chose to call the 
+next handler (by calling base.SendAsync) in order to allow the call through, or we can intercept the call and return
+our own version of the result - which in this case comes from a previously cached response: 
+
+```csharp
+public class CachedResponseHandler : DelegatingHandler
+{
+    private readonly IDistributedCache _cache;
+    private readonly ICacheDateProvider _cacheDateProvider;
+
+    public CachedResponseHandler(IDistributedCache cache, ICacheDateProvider cacheDateProvider)
+    {
+        _cache = cache;
+        _cacheDateProvider = cacheDateProvider;
+    }
+
+    protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var cacheKey = BuildCacheKey(request).ValueOrDefault; 
+        if (string.IsNullOrWhiteSpace(cacheKey))
+            return await base.SendAsync(request, cancellationToken);
+
+        var cacheRequest = await GetContentFromCache(cacheKey, cancellationToken);
+        if (cacheRequest.IsSuccess)
+            return cacheRequest.Value;
+
+        var response = await base.SendAsync(request, cancellationToken);
+        await CacheResponseContent(response, cacheKey, cancellationToken);
+
+        return response;
+    }
+
+	//...
+}
+```
+
 ### Asynchronously stream and deserialise the response 
 
-By calling ```ReadAsStreamAsync``` on the HttpContent, combined with use of ```JsonSerializer.DeserializeAsync```, we're able to deserialise directly from the stream, without buffering:
+When we do have to call out to the 3rd party API, by calling ```ReadAsStreamAsync``` on the HttpContent of the response, and using ```JsonSerializer.DeserializeAsync```, we're able to deserialise directly from the stream, without buffering or preloading:
 
 ```csharp
 public async Task<Result<IList<T>>> Get<T>(string url, CancellationToken cancellationToken)
